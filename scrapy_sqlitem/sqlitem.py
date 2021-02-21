@@ -35,19 +35,19 @@ class SqlItem(with_metaclass(SqlAlchemyItemMeta, Item)):
         super(SqlItem, self).__init__(*args, **kwargs)
         self._matching_dbrow = NotImplemented
 
-    def commit_item(self, engine=None):
+    def commit_item(self, engine=None, excluded_fields=[]):
         """ Save to Database using given engine """
         with engine.begin() as conn:
-            ins = self._generate_insert()
+            ins = self._generate_insert(excluded_fields)
             pk = conn.execute(ins)
             return pk
 
-    def _get_modelargs(self):
+    def _get_modelargs(self, excluded_fields=[]):
         return dict((k, self.get(k)) for k in self._values
-                if k in self._model_fields)
+                if k in self._model_fields and k not in excluded_fields)
 
-    def _generate_insert(self):
-        modelargs = self._get_modelargs()
+    def _generate_insert(self, excluded_fields=[]):
+        modelargs = self._get_modelargs(excluded_fields)
         return self.table.insert().values(**modelargs)
 
     @property
